@@ -234,6 +234,26 @@ class Room {
 	}
 
 	/**
+	 * Return the room properties to send to the signaling server.
+	 *
+	 * @param string $userId
+	 * @return array
+	 */
+	public function getPropertiesForSignaling(string $userId): array {
+		$properties = [
+			'name' => $this->getDisplayName($userId),
+			'type' => $this->getType(),
+		];
+
+		$event = new GenericEvent($this, [
+			'userId' => $userId,
+			'properties' => $properties,
+		]);
+		$this->dispatcher->dispatch(self::class . '::getPropertiesForSignaling', $event);
+		return $event->getArgument('properties');
+	}
+
+	/**
 	 * @param string|null $userId
 	 * @return Participant
 	 * @throws ParticipantNotFoundException When the user is not a participant

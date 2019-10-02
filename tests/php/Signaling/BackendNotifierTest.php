@@ -41,6 +41,8 @@ use OCP\IUserManager;
 use OCP\Security\IHasher;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\GenericEvent;
 
 class CustomBackendNotifier extends BackendNotifier {
 
@@ -91,6 +93,8 @@ class BackendNotifierTest extends \Test\TestCase {
 	protected $app;
 	/** @var BackendNotifier */
 	protected $originalBackendNotifier;
+	/** @var EventDispatcherInterface */
+	private $dispatcher;
 
 	public function setUp() {
 		parent::setUp();
@@ -124,7 +128,7 @@ class BackendNotifierTest extends \Test\TestCase {
 		});
 
 		$dbConnection = \OC::$server->getDatabaseConnection();
-		$dispatcher = \OC::$server->getEventDispatcher();
+		$this->dispatcher = \OC::$server->getEventDispatcher();
 		$this->manager = new Manager(
 			$dbConnection,
 			$config,
@@ -132,7 +136,7 @@ class BackendNotifierTest extends \Test\TestCase {
 			$this->createMock(IUserManager::class),
 			$this->createMock(CommentsManager::class),
 			$this->createMock(TalkSession::class),
-			$dispatcher,
+			$this->dispatcher,
 			$this->timeFactory,
 			$this->createMock(IHasher::class),
 			$this->createMock(IL10N::class)
@@ -466,6 +470,42 @@ class BackendNotifierTest extends \Test\TestCase {
 						'sessionId' => $guestSession,
 						'participantType' => Participant::GUEST,
 					],
+				],
+			],
+		], $bodies);
+	}
+
+	public function testRoomPropertiesEvent() {
+		$listener = function(GenericEvent $event) {
+			$room = $event->getSubject();
+			$properties = $event->getArgument('properties');
+			$properties['foo'] = 'bar';
+			$properties['room'] = $room->getToken();
+			$event->setArgument('properties', $properties);
+		};
+
+		$this->dispatcher->addListener(Room::class . '::getPropertiesForSignaling', $listener);
+		try {
+			$room = $this->manager->createPublicRoom();
+			$room->setName('Test room');
+		} finally {
+			$this->dispatcher->removeListener(Room::class . '::getPropertiesForSignaling', $listener);
+		}
+
+		$requests = $this->controller->getRequests();
+		$bodies = array_map(function($request) use ($room) {
+			return json_decode($this->validateBackendRequest($this->baseUrl . '/api/v1/room/' . $room->getToken(), $request), true);
+		}, $requests);
+		$this->assertContains([
+			'type' => 'update',
+			'update' => [
+				'userids' => [
+				],
+				'properties' => [
+					'name' => $room->getDisplayName(''),
+					'type' => $room->getType(),
+					'foo' => 'bar',
+					'room' => $room->getToken(),
 				],
 			],
 		], $bodies);

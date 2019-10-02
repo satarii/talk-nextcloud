@@ -366,10 +366,6 @@ class SignalingControllerTest extends \Test\TestCase {
 
 		$participant = $this->createMock(Participant::class);
 		$room->expects($this->once())
-			->method('getDisplayName')
-			->with($this->userId)
-			->willReturn($roomName);
-		$room->expects($this->once())
 			->method('getParticipant')
 			->with($this->userId)
 			->willReturn($participant);
@@ -377,8 +373,12 @@ class SignalingControllerTest extends \Test\TestCase {
 			->method('getToken')
 			->willReturn($roomToken);
 		$room->expects($this->once())
-			->method('getType')
-			->willReturn(Room::ONE_TO_ONE_CALL);
+			->method('getPropertiesForSignaling')
+			->with($this->userId)
+			->willReturn([
+				'name' => $roomName,
+				'type' => Room::ONE_TO_ONE_CALL,
+			]);
 
 		$result = $this->performBackendRequest([
 			'type' => 'room',
@@ -413,10 +413,6 @@ class SignalingControllerTest extends \Test\TestCase {
 
 		$participant = $this->createMock(Participant::class);
 		$room->expects($this->once())
-			->method('getDisplayName')
-			->with('')
-			->willReturn($roomName);
-		$room->expects($this->once())
 			->method('getParticipantBySession')
 			->with($sessionId)
 			->willReturn($participant);
@@ -424,8 +420,12 @@ class SignalingControllerTest extends \Test\TestCase {
 			->method('getToken')
 			->willReturn($roomToken);
 		$room->expects($this->once())
-			->method('getType')
-			->willReturn(Room::PUBLIC_CALL);
+			->method('getPropertiesForSignaling')
+			->with('')
+			->willReturn([
+				'name' => $roomName,
+				'type' => Room::PUBLIC_CALL,
+			]);
 
 		$result = $this->performBackendRequest([
 			'type' => 'room',
@@ -460,10 +460,6 @@ class SignalingControllerTest extends \Test\TestCase {
 
 		$participant = $this->createMock(Participant::class);
 		$room->expects($this->once())
-			->method('getDisplayName')
-			->with($this->userId)
-			->willReturn($roomName);
-		$room->expects($this->once())
 			->method('getParticipant')
 			->with($this->userId)
 			->willThrowException(new ParticipantNotFoundException());
@@ -475,8 +471,12 @@ class SignalingControllerTest extends \Test\TestCase {
 			->method('getToken')
 			->willReturn($roomToken);
 		$room->expects($this->once())
-			->method('getType')
-			->willReturn(Room::PUBLIC_CALL);
+			->method('getPropertiesForSignaling')
+			->with($this->userId)
+			->willReturn([
+				'name' => $roomName,
+				'type' => Room::PUBLIC_CALL,
+			]);
 
 		$result = $this->performBackendRequest([
 			'type' => 'room',
@@ -549,10 +549,6 @@ class SignalingControllerTest extends \Test\TestCase {
 
 		$participant = $this->createMock(Participant::class);
 		$room->expects($this->once())
-			->method('getDisplayName')
-			->with($this->userId)
-			->willReturn($roomName);
-		$room->expects($this->once())
 			->method('getParticipant')
 			->with($this->userId)
 			->willReturn($participant);
@@ -560,8 +556,12 @@ class SignalingControllerTest extends \Test\TestCase {
 			->method('getToken')
 			->willReturn($roomToken);
 		$room->expects($this->once())
-			->method('getType')
-			->willReturn(Room::ONE_TO_ONE_CALL);
+			->method('getPropertiesForSignaling')
+			->with($this->userId)
+			->willReturn([
+				'name' => $roomName,
+				'type' => Room::ONE_TO_ONE_CALL,
+			]);
 
 		$result = $this->performBackendRequest([
 			'type' => 'room',
