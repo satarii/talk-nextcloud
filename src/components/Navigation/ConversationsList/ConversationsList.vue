@@ -38,12 +38,24 @@ export default {
 	components: {
 		Conversation
 	},
+	props: {
+		searchText: {
+			type: String,
+			default: ''
+		}
+	},
 	computed: {
 		conversationsList() {
 			return this.$store.getters.conversationsList
 		},
+		filteredConversationsList() {
+			if (this.searchText === '') {
+				return this.conversationsList
+			}
+			return this.conversationsList.filter(conversation => conversation.displayName.indexOf(this.searchText) !== -1)
+		},
 		sortedConversationsList() {
-			return this.conversationsList.slice().sort(this.sortConversations)
+			return this.filteredConversationsList.slice().sort(this.sortConversations)
 		}
 	},
 	beforeMount() {
