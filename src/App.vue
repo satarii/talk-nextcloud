@@ -57,7 +57,6 @@ import AppContent from 'nextcloud-vue/dist/Components/AppContent'
 import AppSidebar from 'nextcloud-vue/dist/Components/AppSidebar'
 import AppSidebarTab from 'nextcloud-vue/dist/Components/AppSidebarTab'
 import Navigation from './components/Navigation/Navigation'
-import Router from './router/router'
 import { EventBus } from './services/EventBus'
 
 export default {
@@ -91,6 +90,20 @@ export default {
 		 */
 		token() {
 			return this.$route.params.token
+		},
+
+		currentConversationName() {
+			if (!this.conversations[this.token]) {
+				return ''
+			}
+
+			return this.conversations[this.token].displayName
+		}
+	},
+
+	watch: {
+		currentConversationName() {
+			this.setPageTitle(this.currentConversationName)
 		}
 	},
 
@@ -104,22 +117,8 @@ export default {
 		 */
 		EventBus.$once('conversationsReceived', () => {
 			if (this.$route.name === 'conversation') {
-				const CURRENT_CONVERSATION_NAME = this.getConversationName(this.token)
-				this.setPageTitle(CURRENT_CONVERSATION_NAME)
+				this.setPageTitle(this.currentConversationName)
 			}
-		})
-		/**
-		 * Global before guard, this is called whenever a navigation is triggered.
-		*/
-		Router.beforeEach((to, from, next) => {
-			/**
-			 * This runs whenever the new route is a conversation.
-			 */
-			if (to.name === 'conversation') {
-				const NEXT_CONVERSATION_NAME = this.getConversationName(to.params.token)
-				this.setPageTitle(NEXT_CONVERSATION_NAME)
-			}
-			next()
 		})
 	},
 
@@ -149,20 +148,6 @@ export default {
 
 		onResize() {
 			this.windowHeight = window.innerHeight - document.getElementById('header').clientHeight
-		},
-		newButtonAction(e) {
-			console.debug(e)
-		},
-		log(e) {
-			console.debug(e)
-		},
-		/**
-		 * Get a conversation's name.
-		 * @param {string} token The conversation's token
-		 * @returns {string} The conversation's name
-		 */
-		getConversationName(token) {
-			return this.$store.getters.conversations[token].displayName
 		}
 	}
 }
